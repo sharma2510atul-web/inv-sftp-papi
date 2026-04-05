@@ -1,0 +1,37 @@
+# This workflow will build a MuleSoft project and deploy to CloudHub
+
+name: Cloudhub deployment with Maven [test]
+
+on:
+  push:
+    branches: [ qa ]
+  
+env:
+  CLIENT_ID: ${{ secrets.CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+  BUSINESS_GROUP_ID: ${{secrets.BUSINESS_GROUP_ID}}
+  ENCRYPTION_KEY: ${{secrets.ENCRYPTION_KEY}}
+
+jobs:
+  BuildAndDeploy:
+    runs-on: ubuntu-latest
+    environment: qa
+    
+    steps:
+    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Maven 3.8.6
+      run: |
+        wget https://archive.apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz
+        tar -xvzf apache-maven-3.8.6-bin.tar.gz
+        sudo mv apache-maven-3.8.6 /opt/maven
+        echo "MAVEN_HOME=/opt/maven" >> $GITHUB_ENV
+        echo "/opt/maven/bin" >> $GITHUB_PATH
+
+    - name: Verify Maven Version
+      run: mvn -version
+    
+    - name: Deploy to Runtime
+      run: mvn clean deploy -DmuleDeploy -s settings.xml -Dmule.env=test -Dmule.key=$ENCRYPTION_KEY  -DCLIENT_ID=$CLIENT_ID -DCLIENT_SECRET=$CLIENT_SECRET -Denvironment=Design -Dreplicas=1 -DvCores=0.2 -DmuleVersion=4.9.2 -DbusinessGroupId=$BUSINESS_GROUP_ID -DskipTests 

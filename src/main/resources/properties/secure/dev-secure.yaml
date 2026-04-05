@@ -1,0 +1,9 @@
+sftp:
+  password: '![bLgfqJjhpbSpSRVDCsr7RQ==]'
+  username: '![OwBZRqzdbiGdSZs7RrMt24iW6Bdy9HS26MHLA9CDYAU=]'
+  host: '![kX0zApEzGoP75iStxs2dTg==]'
+  
+http:
+  request:
+    client_id: '![Vm6XUie0+HKY4UDYqxAgORt4nTUqjNAGrTNJSo+WH3I9RtCmPuRDdH+2ZXhhi5z9]'
+    client_secret: '![6sB+Ama5Nn03kxemzT8TEOjYHEWrRxxz3Huq/Pg0mN/Sz/kmpVrt8ft2GmSyF1Y6]'

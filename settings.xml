@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+<servers>
+    <server>
+        <id>anypoint-exchange-v3</id>
+        <username>~~~Client~~~</username>
+        <password>${env.CLIENT_ID}~?~${env.CLIENT_SECRET}</password>
+    </server>
+
+</servers>
+<profiles>
+    <profile>
+        <id>Mule</id>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+        <repositories>
+            <repository>
+                <id>MuleRepository</id>
+                <name>MuleRepository</name>
+                <url>https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/</url>
+                <layout>default</layout>
+                <releases>
+                    <enabled>true</enabled>
+                </releases>
+                <snapshots>
+                    <enabled>true</enabled>
+                </snapshots>
+            </repository>
+        </repositories>
+    </profile>
+	<profile>
+        <id>anypoint-exchange-v3</id>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+		<properties>
+                <mulesoft.exchange.groupid>${env.BUSINESS_GROUP_ID}</mulesoft.exchange.groupid>
+         </properties>
+        <repositories>
+            <repository>
+                <id>anypoint-exchange-v3</id>
+                <name>anypoint-exchange-v3</name>
+                <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${mulesoft.exchange.groupid}/maven</url>
+                <layout>default</layout>
+                <releases>
+                    <enabled>true</enabled>
+                </releases>
+                <snapshots>
+                    <enabled>true</enabled>
+                </snapshots>
+            </repository>
+        </repositories>
+    </profile>
+</profiles>   
+</settings>
