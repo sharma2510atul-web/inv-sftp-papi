@@ -1,0 +1,9 @@
+sftp:
+  password: '![]'
+  username: '![]'
+  host: '![]'
+  
+http:
+  request:
+    client_id: '![]'
+    client_secret: '![]'

@@ -1,0 +1,8 @@
+# Debug Category
+debug:
+  category: 'com.org-sftp.category'
+
+# Request SMTP Details
+http:
+  request:
+    host: ''

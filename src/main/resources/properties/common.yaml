@@ -1,0 +1,39 @@
+# Environment-agnostic properties
+
+http:
+  request:
+    path: '/emailService'
+    port: '443'
+    readTimeout: '60000'
+    idleTimeout: '30000'
+    basePath: '/api/v1'
+    bufferSize: '1024'
+    reconnection:
+      frequency: '2000'
+      attempts: '2'
+
+batch:
+  agg-size: '200'
+  block-size: '1000'
+
+application:
+  name: 'inv-sftp-papi'
+  version: 'v1'
+  
+sftp:
+  port: '22'
+  bufferSize: '1024'
+  source-path: '/SourceFolder'
+  archive-path: '/ArchiveFolder'
+  destination-path: '/DestinationFolder'
+
+vm:
+  frequency: '2000'
+  attempts: '2'
+
+until-successful:
+  max-retries: '3'
+  frequency: '20000'
+
+email:
+  id: 'atul.eng123@gmail.com'
