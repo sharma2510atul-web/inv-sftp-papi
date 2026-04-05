@@ -14,22 +14,22 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="inventory-papi-main-flow" doc:id="18f0a39d-6cb5-4d4d-a76f-54f2a7465cea" >
 		<scheduler doc:name="Scheduler at 4 am" doc:id="863d5575-49e1-46e4-8b44-d5101aac2542" >
 			<scheduling-strategy >
-				<fixed-frequency />
+				<cron expression="0 0 4 * * ?" timeZone="Asia/Kolkata"/>
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="Log Start INFO" doc:id="90af30fb-f92a-4adb-9b25-bf1f59bd03a4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing started"&#10;}]' />
 		<set-variable value="#[uuid()]" doc:name="Set correlationId" doc:id="6152c508-4013-4c58-9ed3-bbb544c8d4b7" variableName="correlationId" />
 		<sftp:list doc:name="List all the files" doc:id="664adeb8-3991-4029-8b0d-f9adc44279a6" config-ref="SFTP_Config" directoryPath="#[Mule::p('sftp.source-path')]" target="orgFileName" targetValue="#[payload.attributes.fileName[0]]"/>
-		<logger level="DEBUG" doc:name="Log Start DEBUG" doc:id="5d19f054-ae70-4ec8-a098-55fec07e0cd7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-ddTHH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing started",&#10;    "payload": vars.orgFileName default "No file present to process"&#10;}]' category="${debug.category}" />
+		<logger level="DEBUG" doc:name="Log Start DEBUG" doc:id="5d19f054-ae70-4ec8-a098-55fec07e0cd7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing started",&#10;    "payload": vars.orgFileName default "No file present to process"&#10;}]' category="${debug.category}" />
 		<choice doc:name="Check if file is present" doc:id="7c01f2ef-b189-4816-8086-12b25f4d1662">
-			<when expression="#[isEmpty(vars.orgFileName)]">
+			<when expression="#[!isEmpty(vars.orgFileName)]">
 				<sftp:read doc:name="Read the file from source" doc:id="9939d152-a233-479c-b244-945b9985577c" config-ref="SFTP_Config" path="#[Mule::p('sftp.source-path') ++ (vars.orgFileName default &quot;&quot;)]" outputMimeType="text/csv; streaming=true">
 					<ee:repeatable-file-store-stream inMemorySize="${sftp.bufferSize}" />
 				</sftp:read>
 				<flow-ref doc:name="Flow Reference to inventory-papi-batch-job-sub-flow" doc:id="e676f996-4210-4cce-b5ff-b49efdd614fe" name="inventory-papi-batch-job-sub-flow" />
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="Log no files present" doc:id="9864aa9f-3e60-40df-b179-7d46c699e88b" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-ddTHH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "No files present to process"&#10;}]' />
+				<logger level="INFO" doc:name="Log no files present" doc:id="9864aa9f-3e60-40df-b179-7d46c699e88b" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "No files present to process"&#10;}]' />
 				<ee:transform doc:name="emailBody" doc:id="96b9af86-66c6-4228-84e0-4c860549ba0f" >
 					<ee:message />
 					<ee:variables >
@@ -56,7 +56,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 						</http:request>
 						<error-handler >
 							<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="ef437859-4b2b-42cb-99a4-6c361555b442" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE" >
-								<logger level="ERROR" doc:name="Log Failed Record" doc:id="f7c3e185-f35f-4a8e-b447-12f11d78f94d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-ddTHH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
+								<logger level="ERROR" doc:name="Log Failed Record" doc:id="f7c3e185-f35f-4a8e-b447-12f11d78f94d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
 							</on-error-propagate>
 						</error-handler>
 					</try>
@@ -64,7 +64,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 			</otherwise>
 		</choice>
 		<logger level="INFO" doc:name="Log End INFO" doc:id="9116332e-98bb-4925-b11a-c1fc416a93ce" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing ended"&#10;}]' />
-		<logger level="DEBUG" doc:name="Log End DEBUG" doc:id="a88dfed6-199b-4f31-8016-86dcd2908a24" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-ddTHH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing ended",&#10;    "payload": write(vars.filePayload, "application/json")&#10;}]' category="${debug.category}" />
+		<logger level="DEBUG" doc:name="Log End DEBUG" doc:id="a88dfed6-199b-4f31-8016-86dcd2908a24" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing ended",&#10;    "payload": write(vars.filePayload, "application/json")&#10;}]' category="${debug.category}" />
 		<error-handler ref="global-error-handler" />
 	</flow>
 	

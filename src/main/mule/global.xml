@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
     <vm:config name="VM_Config" doc:name="VM Config" doc:id="6a6edab4-0341-4564-b257-028d4769265b" >
 		<vm:connection >
 			<reconnection >
-				<reconnect frequency="${vm.reconnection.frequency}" count="${vm.reconnection.attempts}" blocking="false" />
+				<reconnect frequency="${vm.frequency}" count="${vm.attempts}" blocking="false" />
 			</reconnection>
 		</vm:connection>
 		<vm:queues >

@@ -36,7 +36,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 					</http:request>
 					<error-handler>
 						<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="372839c5-a69b-455d-9f9b-2f3f2ecf9111" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE">
-							<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="ccf4ef60-1829-4944-a4a8-10ba25047dee" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-ddTHH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
+							<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="ccf4ef60-1829-4944-a4a8-10ba25047dee" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
 						</on-error-propagate>
 					</error-handler>
 				</try>
