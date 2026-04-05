@@ -184,7 +184,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="QuantityNotWholeNumber" doc:id="ef7fdc24-824b-4056-89a1-0feda5e238f0" acceptExpression="payload.Quantity[0] is Integer" >
+				<batch:step name="QuantityNotWholeNumber" doc:id="ef7fdc24-824b-4056-89a1-0feda5e238f0" acceptExpression="((payload.Quantity[0] as Number) mod 1) == 0" >
 					<batch:aggregator doc:name="batch-aggregator" doc:id="344f724a-4b75-413d-842f-fcf1f93fa1db" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="b33b7edb-516c-4355-aae2-d9e5f93952d3" >
 							<ee:message >
@@ -226,7 +226,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="ValidRecords" doc:id="ecf5b367-2b04-4964-ae89-fb57c1d096b1" acceptExpression='!isEmpty(payload[0].SKU) and !isEmpty(payload[0].StoreId) and !isEmpty(payload[0]."Type") and !isEmpty(payload[0].Quantity) and !isEmpty(payload[0].Timestamp) and (payload[0].Quantity is Integer) and (payload[0].Type == "Backorder" or payload[0]."Type" == "Standard")'>
+				<batch:step name="ValidRecords" doc:id="ecf5b367-2b04-4964-ae89-fb57c1d096b1" acceptExpression='!isEmpty(payload[0].SKU) and !isEmpty(payload[0].StoreId) and !isEmpty(payload[0]."Type") and !isEmpty(payload[0].Quantity) and !isEmpty(payload[0].Timestamp) and (((payload.Quantity[0] as Number) mod 1) == 0) and (payload[0].Type == "Backorder" or payload[0]."Type" == "Standard")'>
 					<batch:aggregator doc:name="batch-aggregator" doc:id="12a9d3a5-5ea9-45b5-831d-d7c6a8c459ac" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON and StoreId Grouping" doc:id="a85665a9-8c58-49df-8a71-b62d598156f6" >
 							<ee:message >
