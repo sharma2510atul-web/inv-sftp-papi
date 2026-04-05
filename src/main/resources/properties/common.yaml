@@ -23,9 +23,9 @@ application:
 sftp:
   port: '22'
   bufferSize: '1024'
-  source-path: '/SourceFolder'
-  archive-path: '/ArchiveFolder'
-  destination-path: '/DestinationFolder'
+  source-path: '/SourceFolder/'
+  archive-path: '/ArchiveFolder/'
+  destination-path: '/DestinationFolder/'
 
 vm:
   frequency: '2000'
