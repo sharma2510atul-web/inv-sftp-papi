@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="inventory-papi-main-flow" doc:id="18f0a39d-6cb5-4d4d-a76f-54f2a7465cea" >
 		<scheduler doc:name="Scheduler at 4 am" doc:id="863d5575-49e1-46e4-8b44-d5101aac2542" >
 			<scheduling-strategy >
-				<fixed-frequency />
+				<cron expression="0 0 4 * * ?" timeZone="Asia/Kolkata"/>
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="Log Start INFO" doc:id="90af30fb-f92a-4adb-9b25-bf1f59bd03a4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing started"&#10;}]' />
