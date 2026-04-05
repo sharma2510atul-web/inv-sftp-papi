@@ -7,7 +7,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<error-handler name="global-error-handler" doc:id="42e0e0a3-dca6-4e2e-a10a-0c9b13e05d27" >
-		<on-error-propagate enableNotifications="false" logException="false" doc:name="on-error-propagate" doc:id="bf5c2fb0-7596-4348-bedc-56d9a1a4f6cc" type="SFTP:ACCESS_DENIED, SFTP:CONNECTIVITY, SFTP:SFTP_ALREADY_EXISTS, SFTP:SFTP_LOCK, SFTP:ILLEGAL_CONTENT, SFTP:ILLEGAL_PATH, SFTP:RETRY_EXHAUSTED" >
+		<on-error-propagate enableNotifications="false" logException="false" doc:name="on-error-propagate" doc:id="bf5c2fb0-7596-4348-bedc-56d9a1a4f6cc" type="SFTP:ACCESS_DENIED, SFTP:CONNECTIVITY, SFTP:FILE_ALREADY_EXISTS, SFTP:FILE_LOCK, SFTP:ILLEGAL_CONTENT, SFTP:ILLEGAL_PATH, SFTP:RETRY_EXHAUSTED" >
 			<set-variable value='#["SFTP - " ++ ((attributes.statusCode default 500) as String)]' doc:name="httpStatus" doc:id="9f078dec-c78f-4781-ae61-1b4e4a221ed2" variableName="httpStatus" />
 			<ee:transform doc:name="emailBody" doc:id="d9c748a3-232d-4b06-8608-e12aade57d05" >
 				<ee:message />

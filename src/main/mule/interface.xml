@@ -19,11 +19,11 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		</scheduler>
 		<logger level="INFO" doc:name="Log Start INFO" doc:id="90af30fb-f92a-4adb-9b25-bf1f59bd03a4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing started"&#10;}]' />
 		<set-variable value="#[uuid()]" doc:name="Set correlationId" doc:id="6152c508-4013-4c58-9ed3-bbb544c8d4b7" variableName="correlationId" />
-		<sftp:list doc:name="List all the files" doc:id="664adeb8-3991-4029-8b0d-f9adc44279a6" config-ref="SFTP_Config" directoryPath="#[Mule::p('sftp.source-path')]" target="orgFileName" targetValue="#[payload.attributes.fileName[0]]" />
+		<sftp:list doc:name="List all the files" doc:id="664adeb8-3991-4029-8b0d-f9adc44279a6" config-ref="SFTP_Config" directoryPath="#[Mule::p('sftp.source-path')]" target="orgFileName" targetValue="#[payload.attributes.fileName[0]]"/>
 		<logger level="DEBUG" doc:name="Log Start DEBUG" doc:id="5d19f054-ae70-4ec8-a098-55fec07e0cd7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-ddTHH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing started",&#10;    "payload": vars.orgFileName default "No file present to process"&#10;}]' category="${debug.category}" />
 		<choice doc:name="Check if file is present" doc:id="7c01f2ef-b189-4816-8086-12b25f4d1662">
 			<when expression="#[isEmpty(vars.orgFileName)]">
-				<sftp:read doc:name="Read the file from source" doc:id="9939d152-a233-479c-b244-945b9985577c" config-ref="SFTP_Config" path="#[Mule::p('sftp.source-path') ++ (vars.orgFileName default &quot;&quot;)]" >
+				<sftp:read doc:name="Read the file from source" doc:id="9939d152-a233-479c-b244-945b9985577c" config-ref="SFTP_Config" path="#[Mule::p('sftp.source-path') ++ (vars.orgFileName default &quot;&quot;)]" outputMimeType="text/csv; streaming=true">
 					<ee:repeatable-file-store-stream inMemorySize="${sftp.bufferSize}" />
 				</sftp:read>
 				<flow-ref doc:name="Flow Reference to inventory-papi-batch-job-sub-flow" doc:id="e676f996-4210-4cce-b5ff-b49efdd614fe" name="inventory-papi-batch-job-sub-flow" />
