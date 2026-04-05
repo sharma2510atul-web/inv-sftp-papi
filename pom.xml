@@ -61,7 +61,7 @@
 							<mule.env>${mule.env}</mule.env>
 						</properties>
 						<deploymentSettings>
-							<generateDefaultPublicUrl>true</generateDefaultPublicUrl>
+							<generateDefaultPublicUrl>false</generateDefaultPublicUrl>
 						</deploymentSettings>
 						<secureProperties>
 							<mule.key>${mule.key}</mule.key>
@@ -244,6 +244,15 @@
 			<name>MuleSoft Releases Repository</name>
 			<layout>default</layout>
 			<url>https://repository.mulesoft.org/releases/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>mule-public</id>
+			<name>MuleSoft Public Repository</name>
+			<url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+			<layout>default</layout>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>

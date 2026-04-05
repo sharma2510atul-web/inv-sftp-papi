@@ -184,7 +184,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="QuantityNotWholeNumber" doc:id="ef7fdc24-824b-4056-89a1-0feda5e238f0" acceptExpression="payload.Quantity[0] is Integer" >
+				<batch:step name="QuantityNotWholeNumber" doc:id="ef7fdc24-824b-4056-89a1-0feda5e238f0" acceptExpression="((payload.Quantity[0] as Number) mod 1) == 0" >
 					<batch:aggregator doc:name="batch-aggregator" doc:id="344f724a-4b75-413d-842f-fcf1f93fa1db" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="b33b7edb-516c-4355-aae2-d9e5f93952d3" >
 							<ee:message >
@@ -205,7 +205,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="TypeNotOfStandardOrBackOrder" doc:id="59e268bf-da2c-49c9-8177-8f1475c5d8fc" acceptExpression='!(payload."Type"[0] == "Backorder" or payload."Type"[0]== "Standard")' >
+				<batch:step name="TypeNotOfStandardOrBackOrder" doc:id="59e268bf-da2c-49c9-8177-8f1475c5d8fc" acceptExpression='!(payload."Type"[0] == "Backorder" or payload."Type"[0] == "Standard")' >
 					<batch:aggregator doc:name="batch-aggregator" doc:id="ac9b6af6-1e86-4f99-8ac8-71a93f7cec8b" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="54de2132-8e9a-4abf-959e-08d45d555dd1" >
 							<ee:message >
@@ -226,7 +226,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="ValidRecords" doc:id="ecf5b367-2b04-4964-ae89-fb57c1d096b1" acceptExpression='!isEmpty(payload[0].SKU) and !isEmpty(payload[0].StoreId) and !isEmpty(payload[0]."Type") and !isEmpty(payload[0].Quantity) and !isEmpty(payload[0].Timestamp) and (payload[0].Quantity is Integer) and (payload[0].Type == "Backorder" or payload[0]."Type"== "Standard")'>
+				<batch:step name="ValidRecords" doc:id="ecf5b367-2b04-4964-ae89-fb57c1d096b1" acceptExpression='!isEmpty(payload[0].SKU) and !isEmpty(payload[0].StoreId) and !isEmpty(payload[0]."Type") and !isEmpty(payload[0].Quantity) and !isEmpty(payload[0].Timestamp) and (((payload.Quantity[0] as Number) mod 1) == 0) and (payload[0].Type == "Backorder" or payload[0]."Type" == "Standard")'>
 					<batch:aggregator doc:name="batch-aggregator" doc:id="12a9d3a5-5ea9-45b5-831d-d7c6a8c459ac" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON and StoreId Grouping" doc:id="a85665a9-8c58-49df-8a71-b62d598156f6" >
 							<ee:message >
@@ -320,7 +320,7 @@ flatten(payload)]]></ee:set-payload>
 			
 </batch:process-records>
 			<batch:on-complete >
-				<sftp:move doc:name="Move to Archive folder" doc:id="3aa4baab-3694-4926-abcc-9171cdf53352" config-ref="SFTP_Config" sourcePath="#[Mule::p('sftp.source-path')]" targetPath="#[Mule::p('sftp.archive-path')]" renameTo='#["processed_" ++ (now() as String) ++ "_" ++ (vars.orgFileName default "")]'/>
+				<sftp:move doc:name="Move to Archive folder" doc:id="3aa4baab-3694-4926-abcc-9171cdf53352" config-ref="SFTP_Config" sourcePath="#[Mule::p('sftp.source-path') ++ (vars.orgFileName default &quot;&quot;)]" targetPath="#[Mule::p('sftp.archive-path')]" renameTo='#["processed_" ++ (now() as String) ++ "_" ++ (vars.orgFileName default "")]'/>
 				<set-variable value="#[output application/json&#10;---&#10;[]]" doc:name="failedRecordDetails variable" doc:id="4935884b-d621-45df-880f-e9895c56b221" variableName="failedRecordDetails" />
 				<flow-ref doc:name="Flow Reference to consume-failedRecords-flow" doc:id="fb84b81d-282e-4488-8daf-8fc26153f330" name="consume-failedRecords-sub-flow"/>
 			</batch:on-complete>
