@@ -33,4 +33,4 @@ jobs:
       run: mvn -version
       
     - name: Deploy to Runtime
-      run: mvn clean deploy -DmuleDeploy -s settings.xml -Dmule.env=dev -Dmule.key=$ENCRYPTION_KEY  -DCLIENT_ID=$CLIENT_ID -DCLIENT_SECRET=$CLIENT_SECRET -Denvironment=Sandbox -Dreplicas=1 -DvCores=0.2 -DmuleVersion=4.9.2 -DbusinessGroupId=$BUSINESS_GROUP_ID -DskipTests 
+      run: mvn clean deploy -DmuleDeploy -s settings.xml -Dmule.env=dev -Dmule.key=$ENCRYPTION_KEY -DCLIENT_ID=$CLIENT_ID -DCLIENT_SECRET=$CLIENT_SECRET -Denvironment=Sandbox -Dreplicas=1 -DvCores=0.2 -DmuleVersion=4.9.2 -DbusinessGroupId=$BUSINESS_GROUP_ID -DskipTests
