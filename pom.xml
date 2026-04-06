@@ -74,6 +74,7 @@
 					<sharedLibraries/>
 				</configuration>
 			</plugin>
+		</plugins>
 	</build>
 
 	<dependencies>
