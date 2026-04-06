@@ -16,6 +16,95 @@ http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd 
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
+	<sub-flow name="publish-failed-records-sub-flow" doc:id="8d168e5f-0e09-449a-870e-68237a8202d7" >
+		<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="b1c2664d-a17d-47c7-a78c-2a02edf73685" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Missing SKU details in the file " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' />
+		<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="34f4891a-5a4a-4310-88ae-ff3f9261e8c7" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
+							<vm:content><![CDATA[#[output application/json
+---
+{
+	"failedPayload": payload,
+	"message": vars.errorMsg
+}]]]></vm:content>
+						</vm:publish>
+	</sub-flow>
+	<sub-flow name="valid-records-processing-sub-flow" doc:id="e65f2f37-e429-4366-a90f-a577cc67f2a2" >
+		<logger level="INFO" doc:name="Log Valid Record Processing Started" doc:id="4ebfb46d-ff4f-4584-b671-7be82c2e223b" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Valid Record Processing Started " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' />
+		<ee:transform doc:name="Payload to JSON and StoreId Grouping" doc:id="4e2b9b29-2b70-47eb-b071-3714672261c0">
+							<ee:message>
+								<ee:set-payload resource="dwl/msg-payload-mapping.dwl" />
+							
+</ee:message>
+						</ee:transform>
+		<foreach doc:name="for-each" doc:id="7ddd9634-1c0d-4860-8e54-99553323213b" collection="#[payload]">
+							<ee:transform doc:name="StoreId, FileName and RecordDetails variable" doc:id="eba3dc44-51f1-43b9-8855-90fb0de4086c">
+								<ee:message>
+								</ee:message>
+								<ee:variables>
+									<ee:set-variable variableName="recordDetails"><![CDATA[%dw 2.0
+output application/java
+---
+payload.recordDetails]]></ee:set-variable>
+									<ee:set-variable resource="dwl/var-fileName-destination.dwl" variableName="fileName" />
+								
+</ee:variables>
+							</ee:transform>
+							<try doc:name="try-catch" doc:id="c0b2290d-5aec-4fcc-aa97-1cdb5fe2998a">
+								<sftp:write doc:name="Write files at destination" doc:id="c510afb3-f53d-46db-937a-78d9760df92a" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.fileName default &quot;&quot;)]" mode="CREATE_NEW">
+									<sftp:content><![CDATA[#[%dw 2.0
+output application/csv header=true,separator=","
+---
+vars.recordDetails]]]></sftp:content>
+								</sftp:write>
+								<error-handler>
+									<on-error-continue enableNotifications="false" logException="false" doc:name="on-error-continue" doc:id="c3e0f158-675f-4988-8d0c-dfff839a0fab" type="SFTP:FILE_ALREADY_EXISTS">
+										<sftp:write doc:name="Write files at destination" doc:id="b3cbeea7-3d0b-4823-9568-7030e6efbeb2" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.fileName default &quot;&quot;)]" mode="APPEND">
+											<sftp:content><![CDATA[#[%dw 2.0
+output application/csv header=true,separator=","
+---
+vars.recordDetails]]]></sftp:content>
+										</sftp:write>
+									
+</on-error-continue>
+								</error-handler>
+							</try>
+						</foreach>
+		<logger level="INFO" doc:name="Log Valid Record Processing Ended" doc:id="f7500bc1-c9af-472a-9f90-d3185aeb4879" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Valid Record Processing Ended " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' />
+	</sub-flow>
+	<sub-flow name="smtp-request-sub-flow" doc:id="73ee3b3f-eb83-4e9b-a708-2f2645e3d9ef" >
+		<until-successful maxRetries="#[Mule::p('until-successful.max-retries')]" doc:name="until-successful" doc:id="21e5c1d0-9ad1-4306-9141-d4a5fafddeb7" millisBetweenRetries="#[Mule::p('until-successful.frequency')]">
+				<try doc:name="try-catch" doc:id="d0e9390d-597b-4bfe-952f-daaaa518b599">
+					<http:request method="POST" doc:name="Email Request" doc:id="8deb9151-5f71-4cdf-b2b6-99ea26f26167" config-ref="HTTP_SMTP_Request_configuration" path="#[Mule::p('http.request.path')]">
+						<http:body><![CDATA[#[output application/json
+---
+{
+  "emailSubject": "Mule Application Error Notification",
+  "emailMessage": vars.emailMessage,
+  "emailAddress": Mule::p('email.id')
+}]]]></http:body>
+						<http:headers><![CDATA[#[output application/json
+---
+{
+	"x-correlation-id": vars.correlationId default uuid(),
+	"client_id": Mule::p('secure::http.request.client_id'),
+	"client_secret": Mule::p('secure::http.request.client_secret')
+}]]]></http:headers>
+					</http:request>
+					<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="20d29115-d594-4fba-9036-6a966770ab8c" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE">
+							<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="df82b09f-3c3c-4734-8c6f-d64abe03dcd3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
+						</on-error-propagate>
+						<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="289716bf-5861-4d65-aeb3-52c17a08275f" type="ANY">
+											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="b61055ec-74a8-4b7f-bc61-42474910f9a5" variableName="errorDetails" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</until-successful>
+		<choice doc:name="Choice" doc:id="ff3d5b0c-b834-4244-a611-24aa59e8d944">
+					<when expression="#[!isEmpty(vars.errorDetails)]">
+						<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="20d8b237-327a-45df-a0e9-0c6590117a47" type="SMTP:OTHER_ERROR" />
+					</when>
+				</choice>
+	</sub-flow>
 	<sub-flow name="consume-failedRecords-sub-flow" doc:id="ece7ae53-cfe5-4a2b-bf15-aa8e8a209a82" >
 		<try doc:name="try-catch" doc:id="a6f213f7-3289-475e-9c86-84ec8b75967e" >
 			<vm:consume doc:name="Consume message from Invalid Record Queue" doc:id="ad6eb00a-b405-47ab-aeb4-756a6c5b754e" config-ref="VM_Config" queueName="InvalidRecordQueue"/>
@@ -39,39 +128,7 @@ http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sft
 									<ee:set-variable resource="dwl/var-invalid-records-email-message.dwl" variableName="emailMessage" />
 						</ee:variables>
 					</ee:transform>
-							<until-successful maxRetries="#[Mule::p('until-successful.max-retries')]" doc:name="until-successful" doc:id="8714b62d-6a2b-400d-8573-694de2671269" millisBetweenRetries="#[Mule::p('until-successful.frequency')]">
-								<try doc:name="try-catch" doc:id="8f3f23aa-e86e-44b7-a1b8-9ecbd0a0ece7" >
-									<http:request method="POST" doc:name="Email Request" doc:id="b1691b74-8f82-43c3-9272-dfdb395d9759" config-ref="HTTP_SMTP_Request_configuration" path="#[Mule::p('http.request.path')]" >
-										<http:body ><![CDATA[#[output application/json
----
-{
-  "emailSubject": "Mule Application Error Notification",
-  "emailMessage": vars.emailMessage,
-  "emailAddress":  Mule::p('email.id')
-}]]]></http:body>
-										<http:headers ><![CDATA[#[output application/json
----
-{
-	"x-correlation-id": vars.correlationId default uuid(),
-	"client_id": Mule::p('secure::http.request.client_id'),
-	"client_secret": Mule::p('secure::http.request.client_secret')
-}]]]></http:headers>
-									</http:request>
-									<error-handler >
-										<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="82d47c25-2ab6-4978-b1b6-59bf39516fe5" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE" >
-											<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="f73a07ca-a26e-4b65-abbb-cc32ccd3e3bc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
-										</on-error-propagate>
-										<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="f5b805d7-fd6e-4b33-ab52-03b33de5540f" type="ANY">
-											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="54339583-653f-4c0a-9236-a3727e93dd94" variableName="errorDetails"/>
-										</on-error-continue>
-									</error-handler>
-								</try>
-							</until-successful>
-							<choice doc:name="Choice" doc:id="99d7c1ea-fbd8-48e6-a248-643247a4ad5c" >
-								<when expression="#[!isEmpty(vars.errorDetails)]">
-									<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="51d42208-dfbf-425e-abb5-5c034ac86d1e" type="SMTP:OTHER_ERROR"/>
-								</when>
-							</choice>
+							<flow-ref doc:name="Flow Reference to smtp-request-sub-flow" doc:id="f31013a4-b8bc-410d-b725-4fa03985e264" name="smtp-request-sub-flow" />
 						</when>
 						<otherwise >
 							<logger level="INFO" doc:name="Log no failed records" doc:id="c1828dcf-50b8-4af2-99f2-f87a8ed5f5b5" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "No failed records present to be sent for notification"&#10;}]' />
@@ -96,188 +153,134 @@ http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sft
 ---
 flatten(payload)]]></ee:set-payload>
 							</ee:message>
-						</ee:transform>
-						<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="b1c2664d-a17d-47c7-a78c-2a02edf73685" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Missing SKU details in the file " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]'/>
-						<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="34f4891a-5a4a-4310-88ae-ff3f9261e8c7" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
-							<vm:content><![CDATA[#[output application/json
+							<ee:variables >
+								<ee:set-variable variableName="errorMsg" ><![CDATA[%dw 2.0
+output application/json
 ---
-{
-	"failedPayload": payload,
-	"message": "Missing SKU details"
-}]]]></vm:content>
-						</vm:publish>
+"Missing SKU details"]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference to publish-failed-records-sub-flow" doc:id="6dd61c66-f29d-4536-9d07-d8a7bf92df0f" name="publish-failed-records-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
 				<batch:step name="StoreIdNotPresent" doc:id="b38d9c5f-1522-4f1c-bbda-b0e940a257ab" acceptExpression="isEmpty(payload[0].StoreId)" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="5674f498-68cf-4754-b615-e32096d12455" preserveMimeTypes="true" size="${batch.agg-size}">
-						<ee:transform doc:name="Payload to JSON" doc:id="abfa5794-7536-4ee0-bcbf-7aacc0cf7f76" >
-							<ee:message >
-								<ee:set-payload ><![CDATA[output application/json indent=false
+						<ee:transform doc:name="Payload to JSON" doc:id="3479bfeb-a0b0-4b0d-bafb-d5b773bde9b0">
+							<ee:message>
+								<ee:set-payload><![CDATA[output application/json indent=false
 ---
 flatten(payload)]]></ee:set-payload>
 							</ee:message>
-						</ee:transform>
-						<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="c507d2dd-f091-4a67-9cfb-ce26094a2656" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Missing StoreId details " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]'/>
-						<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="46ace3f7-4012-484e-a130-36d0b1dcc23c" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
-							<vm:content ><![CDATA[#[output application/json
+							<ee:variables>
+								<ee:set-variable variableName="errorMsg"><![CDATA[%dw 2.0
+output application/json
 ---
-{
-	"failedPayload": payload,
-	"message": "Missing StoreId details"
-}]]]></vm:content>
-						</vm:publish>
+"Missing StoreId details"]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference to publish-failed-records-sub-flow" doc:id="7460f7fd-baff-470e-a235-a42b5d8e4d5d" name="publish-failed-records-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
 				<batch:step name="TypeNotPresent" doc:id="0510ae3e-7eef-4794-ae89-f27d4ee948ad" acceptExpression='isEmpty(payload[0]."Type")' acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="b308913d-292d-4bec-b715-c0411c07e51f" preserveMimeTypes="true" size="${batch.agg-size}">
-						<ee:transform doc:name="Payload to JSON" doc:id="a234c986-874e-4c84-beb7-c04cf7096d4d" >
-							<ee:message >
-								<ee:set-payload ><![CDATA[output application/json indent=false
+						<ee:transform doc:name="Payload to JSON" doc:id="68438918-bc72-4242-8cff-a8d02e9dcb79">
+							<ee:message>
+								<ee:set-payload><![CDATA[output application/json indent=false
 ---
 flatten(payload)]]></ee:set-payload>
 							</ee:message>
-						</ee:transform>
-						<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="c744b6fe-8557-4fef-9298-541bd3f92638" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Missing Type details " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]'/>
-						<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="17d34260-258d-4a18-a8e3-58f28a1f1310" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
-							<vm:content ><![CDATA[#[output application/json
+							<ee:variables>
+								<ee:set-variable variableName="errorMsg"><![CDATA[%dw 2.0
+output application/json
 ---
-{
-	"failedPayload": payload,
-	"message": "Missing Type details"
-}]]]></vm:content>
-						</vm:publish>
+"Missing Type details"]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference to publish-failed-records-sub-flow" doc:id="0ef4e6f4-6799-4a49-b33a-81a06f2c3ad1" name="publish-failed-records-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
 				<batch:step name="QuantityNotPresent" doc:id="8d377b13-4f14-4359-a75a-1b23dff559ef" acceptExpression="isEmpty(payload[0].Quantity)" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="4a4d2925-bff1-4ee1-8427-7b690c04c8da" size="${batch.agg-size}" preserveMimeTypes="true">
-						<ee:transform doc:name="Payload to JSON" doc:id="1cf7a24d-d18c-4792-a6cc-1d553672cc9b" >
-							<ee:message >
-								<ee:set-payload ><![CDATA[output application/json indent=false
+						<ee:transform doc:name="Payload to JSON" doc:id="afff2e7c-a39f-4738-945b-a1b7e4c92ecc">
+							<ee:message>
+								<ee:set-payload><![CDATA[output application/json indent=false
 ---
 flatten(payload)]]></ee:set-payload>
 							</ee:message>
-						</ee:transform>
-						<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="93011174-97df-40a4-8359-8a869355267b" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Missing Quantity details " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]'/>
-						<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="693ab84b-a6d9-46a5-89d3-ae1fdaf1f89a" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
-							<vm:content ><![CDATA[#[output application/json
+							<ee:variables>
+								<ee:set-variable variableName="errorMsg"><![CDATA[%dw 2.0
+output application/json
 ---
-{
-	"failedPayload": payload,
-	"message": "Missing Quantity details"
-}]]]></vm:content>
-						</vm:publish>
+"Missing Quantity details"]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference to publish-failed-records-sub-flow" doc:id="ad2a25ed-ba96-40ac-9c85-af97065833b3" name="publish-failed-records-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
 				<batch:step name="TimestampNotPresent" doc:id="5dd25c35-2291-4601-bf69-4d50e9730648" acceptExpression="isEmpty(payload[0].Timestamp)" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="5b9e0aab-d7ac-4977-9539-77690be685ca" preserveMimeTypes="true" size="${batch.agg-size}">
-						<ee:transform doc:name="Payload to JSON" doc:id="b5356f5c-f6cb-44ed-bd5e-1fb43c6090ad" >
-							<ee:message >
-								<ee:set-payload ><![CDATA[output application/json indent=false
+						<ee:transform doc:name="Payload to JSON" doc:id="5e889ece-d21c-4a0e-b3ba-43a208e1d34d">
+							<ee:message>
+								<ee:set-payload><![CDATA[output application/json indent=false
 ---
 flatten(payload)]]></ee:set-payload>
 							</ee:message>
-						</ee:transform>
-						<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="b7433b11-91cd-4613-940a-058a1cf1fb48" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Missing TimeStamp details " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]'/>
-						<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="7d055570-c6de-442e-bbec-80e45d9ee4b4" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
-							<vm:content ><![CDATA[#[output application/json
+							<ee:variables>
+								<ee:set-variable variableName="errorMsg"><![CDATA[%dw 2.0
+output application/json
 ---
-{
-	"failedPayload": payload,
-	"message": "Missing TimeStamp details"
-}]]]></vm:content>
-						</vm:publish>
+"Missing Timestamps details"]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference to publish-failed-records-sub-flow" doc:id="5a755ff8-ea60-40f1-854f-5c99ebae4929" name="publish-failed-records-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
 				<batch:step name="QuantityNotWholeNumber" doc:id="0cc76bf3-6bce-423a-b471-1af24bd6fda5" acceptExpression="((payload[0].Quantity as Number) mod 1)  != 0" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="6f013c36-aeb0-4838-ae7e-a29105d00019" preserveMimeTypes="true" size="${batch.agg-size}">
-						<ee:transform doc:name="Payload to JSON" doc:id="e42c4a89-134a-4f06-9db1-2d7591dcc291" >
-							<ee:message >
-								<ee:set-payload ><![CDATA[output application/json indent=false
+						<ee:transform doc:name="Payload to JSON" doc:id="c023eb7c-1bf8-482a-b3e8-5850d73a183c">
+							<ee:message>
+								<ee:set-payload><![CDATA[output application/json indent=false
 ---
 flatten(payload)]]></ee:set-payload>
 							</ee:message>
-						</ee:transform>
-						<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="20cda1d1-33ec-437c-916f-d07d2adcbc7e" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Quantity not a whole Number " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]'/>
-						<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="fede900e-76c6-4182-bda3-ad4892deb09e" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
-							<vm:content ><![CDATA[#[output application/json
+							<ee:variables>
+								<ee:set-variable variableName="errorMsg"><![CDATA[%dw 2.0
+output application/json
 ---
-{
-	"failedPayload": payload,
-	"message": "Quantity not a whole Number"
-}]]]></vm:content>
-						</vm:publish>
+"Quantity not a whole Number"]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference to publish-failed-records-sub-flow" doc:id="76443bb3-5b6f-4181-8c79-5cbf872a886e" name="publish-failed-records-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
 				<batch:step name="TypeNotOfStandardOrBackOrder" doc:id="e484034d-8f3d-45f5-b791-34da50be701d" acceptExpression='!(["Backorder","Standard"] contains payload[0]."Type")' acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="432bb3e2-6ff9-4c6b-b954-c00b26adaa9d" preserveMimeTypes="true" size="${batch.agg-size}">
-						<ee:transform doc:name="Payload to JSON" doc:id="4100f125-c7e1-4cbd-af74-3a53b8857649" >
-							<ee:message >
-								<ee:set-payload ><![CDATA[output application/json indent=false
+						<ee:transform doc:name="Payload to JSON" doc:id="dce43ad4-bbe2-4e2e-a736-147b4e1d7438">
+							<ee:message>
+								<ee:set-payload><![CDATA[output application/json indent=false
 ---
 flatten(payload)]]></ee:set-payload>
 							</ee:message>
-						</ee:transform>
-						<logger level="ERROR" doc:name="ERROR:Log Failed Record" doc:id="99db0c6b-3fa2-41fd-8deb-9fd0e6af545d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Type not a standard or backorder details " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]'/>
-						<vm:publish queueName="InvalidRecordQueue" doc:name="Publish failed Records" doc:id="e1ecb3d9-d262-4a8c-9dfa-1827bc49f721" config-ref="VM_Config" sendCorrelationId="ALWAYS" correlationId="#[vars.correlationId default uuid()]">
-							<vm:content ><![CDATA[#[output application/json
+							<ee:variables>
+								<ee:set-variable variableName="errorMsg"><![CDATA[%dw 2.0
+output application/json
 ---
-{
-	"failedPayload": payload,
-	"message": "Type not a standard or backorder "
-}]]]></vm:content>
-						</vm:publish>
+"Type not a standard or backorder "]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference to publish-failed-records-sub-flow" doc:id="96fa5a0f-529c-4a59-bd7a-27071791d0a2" name="publish-failed-records-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
 				<batch:step name="ValidRecords" doc:id="c2fb615d-2ca3-46b2-b4f5-dab2d7e2dcc6" acceptExpression='!isEmpty(payload.SKU[0]) and !isEmpty(payload.StoreId[0]) and !isEmpty(payload."Type"[0]) and !isEmpty(payload.Quantity[0]) and !isEmpty(payload.Timestamp[0]) and (((payload.Quantity[0] as Number) mod 1) == 0) and (["Backorder","Standard"] contains payload."Type"[0])' acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="96da9d22-cc5c-4b99-af01-ce68001f6944" size="${batch.agg-size}" preserveMimeTypes="true">
-						<logger level="INFO" doc:name="Log Valid Record Processing Started" doc:id="4ebfb46d-ff4f-4584-b671-7be82c2e223b" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Valid Record Processing Started " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' />
-						<ee:transform doc:name="Payload to JSON and StoreId Grouping" doc:id="4e2b9b29-2b70-47eb-b071-3714672261c0" >
-							<ee:message >
-								<ee:set-payload resource="dwl/msg-payload-mapping.dwl" />
-							
-</ee:message>
-						</ee:transform>
-						<foreach doc:name="for-each" doc:id="7ddd9634-1c0d-4860-8e54-99553323213b" collection="#[payload]">
-							<ee:transform doc:name="StoreId, FileName and RecordDetails variable" doc:id="eba3dc44-51f1-43b9-8855-90fb0de4086c" >
-								<ee:message >
-								</ee:message>
-								<ee:variables >
-									<ee:set-variable variableName="recordDetails" ><![CDATA[%dw 2.0
-output application/java
----
-payload.recordDetails]]></ee:set-variable>
-									<ee:set-variable resource="dwl/var-fileName-destination.dwl" variableName="fileName" />
-								
-</ee:variables>
-							</ee:transform>
-							<try doc:name="try-catch" doc:id="c0b2290d-5aec-4fcc-aa97-1cdb5fe2998a" >
-								<sftp:write doc:name="Write files at destination" doc:id="c510afb3-f53d-46db-937a-78d9760df92a" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.fileName default &quot;&quot;)]" mode="CREATE_NEW">
-									<sftp:content ><![CDATA[#[%dw 2.0
-output application/csv header=true,separator=","
----
-vars.recordDetails]]]></sftp:content>
-								</sftp:write>
-								<error-handler >
-									<on-error-continue enableNotifications="false" logException="false" doc:name="on-error-continue" doc:id="c3e0f158-675f-4988-8d0c-dfff839a0fab" type="SFTP:FILE_ALREADY_EXISTS" >
-										<sftp:write doc:name="Write files at destination" doc:id="b3cbeea7-3d0b-4823-9568-7030e6efbeb2" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.fileName default &quot;&quot;)]" mode="APPEND">
-											<sftp:content ><![CDATA[#[%dw 2.0
-output application/csv header=true,separator=","
----
-vars.recordDetails]]]></sftp:content>
-										</sftp:write>
-									
-</on-error-continue>
-								</error-handler>
-							</try>
-						</foreach>
-						<logger level="INFO" doc:name="Log Valid Record Processing Ended" doc:id="f7500bc1-c9af-472a-9f90-d3185aeb4879" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Valid Record Processing Ended " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' />
+						<flow-ref doc:name="Flow Reference to valid-records-processing-sub-flow" doc:id="a2632f16-1259-435a-9d9a-62635c0f6daf" name="valid-records-processing-sub-flow" />
 					</batch:aggregator>
 				</batch:step>
 				<batch:step name="OnlyFailures" doc:id="74f8e4fc-6f7b-48bf-aa8e-4a2997c8a413" acceptPolicy="ONLY_FAILURES">
@@ -296,39 +299,7 @@ flatten(payload)]]></ee:set-payload>
 								<ee:set-variable resource="dwl/var-mule-prc-failed-email-message.dwl" variableName="emailMessage" />
 							</ee:variables>
 						</ee:transform>
-						<until-successful maxRetries="#[Mule::p('until-successful.max-retries')]" doc:name="until-successful" doc:id="1be357ae-89d9-4d00-a3ef-45d21735db79" millisBetweenRetries="#[Mule::p('until-successful.frequency')]">
-							<try doc:name="try-catch" doc:id="7185d897-6488-4701-bc05-f1f9c5ebd45d" >
-								<http:request method="POST" doc:name="Email Request" doc:id="c66214e1-0b54-4800-8504-1d87059cf46f" config-ref="HTTP_SMTP_Request_configuration" path="#[Mule::p('http.request.path')]">
-							<http:body><![CDATA[#[output application/json
----
-{
-  "emailSubject": "Mule Application Error Notification",
-  "emailMessage": vars.emailMessage,
-  "emailAddress":  Mule::p('email.id')
-}]]]></http:body>
-							<http:headers><![CDATA[#[output application/json
----
-{
-	"x-correlation-id": vars.correlationId default uuid(),
-	"client_id": Mule::p('secure::http.request.client_id'),
-	"client_secret": Mule::p('secure::http.request.client_secret')
-}]]]></http:headers>
-						</http:request>
-								<error-handler >
-									<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="3ac70f62-1c16-47b5-b284-60861b0930d9" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE">
-										<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="00a80f75-5c3e-49c1-8b33-966fb8e72b39" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]'/>
-									</on-error-propagate>
-									<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="e776f280-93cc-49f0-90df-b9f1a2a764d5" type="ANY">
-											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="6536bcc0-06a0-4bcf-b97d-02416f0c2b1c" variableName="errorDetails"/>
-									</on-error-continue>
-								</error-handler>
-							</try>
-						</until-successful>
-						<choice doc:name="Choice" doc:id="b87a11e2-278b-4bd0-b60d-07e5dd2445b9">
-								<when expression="#[!isEmpty(vars.errorDetails)]">
-									<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="8324cb96-8dd4-4944-93fc-9b0126e52907" type="SMTP:OTHER_ERROR" />
-								</when>
-							</choice>
+						<flow-ref doc:name="Flow Reference to smtp-request-sub-flow" doc:id="c1e24a5a-d47c-4c02-86b4-be52b25e2d39" name="smtp-request-sub-flow" />
 					
 </batch:aggregator>
 				</batch:step>
