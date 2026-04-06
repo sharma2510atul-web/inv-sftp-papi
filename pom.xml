@@ -4,7 +4,7 @@
 
 	<groupId>dbe2a955-f10c-47c6-bcc3-43b50b56693f</groupId>
 	<artifactId>inventory-sftp-papi</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<packaging>mule-application</packaging>
 	<name>inventory-sftp-papi</name>
 
