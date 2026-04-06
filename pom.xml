@@ -70,7 +70,6 @@
 							<mule.key>${mule.key}</mule.key>
 						</secureProperties>
 					</cloudhub2Deployment>
-					<classifier>mule-application</classifier>
 				</configuration>
 			</plugin>
 		</plugins>
