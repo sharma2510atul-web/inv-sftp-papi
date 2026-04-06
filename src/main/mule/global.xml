@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
-	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
-	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="
-http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
-http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
-http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
-    <configuration-properties doc:name="Configuration properties" doc:id="9d015d85-152c-471d-92cc-550b039460df" doc:description="Environment-agnostic properties" file="properties/common.yaml" />
-    <configuration-properties doc:name="Configuration properties" doc:id="1d9c81de-790e-4832-b752-60c31f8d8215" file="properties/${mule.env}.yaml" doc:description="Environment-specific properties" />
-    <secure-properties:config name="secure-properties-config" doc:name="Secure Properties Config" doc:id="9174e84d-c26a-4ac8-b9b7-e5ddec0ec37b" doc:description="Environment-specific secure properties" file="properties/secure/${mule.env}-secure.yaml" key="${mule.key}" />
-    <configuration doc:name="Configuration" doc:id="b60c720d-001e-481b-ae95-d49e50405b75" defaultErrorHandler-ref="global-error-handler" doc:description="Global configuration for default error handler" />
-    <vm:config name="VM_Config" doc:name="VM Config" doc:id="6a6edab4-0341-4564-b257-028d4769265b" >
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd 
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="6919cdae-ea29-4aff-bedc-cb82e9563755" doc:description="Environment-agnostic properties" file="properties/common.yaml" />
+    <configuration-properties doc:name="Configuration properties" doc:id="a9c66182-1bac-4770-a606-787d94eea795" file="properties/${mule.env}.yaml" doc:description="Environment-specific properties" />
+    <secure-properties:config name="secure-properties-config" doc:name="Secure Properties Config" doc:id="68efc28d-17ac-4c65-b24a-840c842ce606" doc:description="Environment-specific secure properties" file="properties/secure/${mule.env}-secure.yaml" key="${mule.key}" />
+    <configuration doc:name="Configuration" doc:id="bba16295-d0a8-4985-826c-360f4a47e5a2" defaultErrorHandler-ref="global-error-handler" doc:description="Global configuration for default error handler" />
+    <vm:config name="VM_Config" doc:name="VM Config" doc:id="65288e76-7c65-4579-9780-a3fef64a9bd2" >
 		<vm:connection >
 			<reconnection >
 				<reconnect frequency="${vm.frequency}" count="${vm.attempts}" blocking="false" />
@@ -26,14 +24,15 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 			<vm:queue queueName="InvalidRecordQueue" queueType="PERSISTENT" />
 		</vm:queues>
 	</vm:config>
-	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="f72d1ffa-3425-4c1c-969a-47c690afbaf7" >
+	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="30d73998-b329-4456-8dcf-60228cd51bc1" >
 		<sftp:connection host="${secure::sftp.host}" username="${secure::sftp.username}" password="${secure::sftp.password}" port="${sftp.port}"/>
 	</sftp:config>
-	<http:request-config name="HTTP_SMTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="135c4804-14de-4dc6-861b-48cd13e721ed" basePath="${http.request.basePath}" >
+	<http:request-config name="HTTP_SMTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="1da907d1-f7f8-4180-a381-6b448615cabb" basePath="${http.request.basePath}" >
 		<http:request-connection protocol="HTTPS" host="${http.request.host}" port="${http.request.port}" connectionIdleTimeout="${http.request.idleTimeout}" responseBufferSize="${http.request.bufferSize}">
 			<reconnection>
 				<reconnect frequency="${http.request.reconnection.frequency}" count="${http.request.reconnection.attempts}" blocking="false" />
 			</reconnection>
 		</http:request-connection>
 	</http:request-config>
+	
 </mule>

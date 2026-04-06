@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:email="http://www.mulesoft.org/schema/mule/email"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<error-handler name="global-error-handler" doc:id="42e0e0a3-dca6-4e2e-a10a-0c9b13e05d27" >
-		<on-error-propagate enableNotifications="false" logException="false" doc:name="on-error-propagate" doc:id="bf5c2fb0-7596-4348-bedc-56d9a1a4f6cc" type="SFTP:ACCESS_DENIED, SFTP:CONNECTIVITY, SFTP:FILE_ALREADY_EXISTS, SFTP:FILE_LOCK, SFTP:ILLEGAL_CONTENT, SFTP:ILLEGAL_PATH, SFTP:RETRY_EXHAUSTED" >
-			<set-variable value='#["SFTP - " ++ ((attributes.statusCode default 500) as String)]' doc:name="httpStatus" doc:id="9f078dec-c78f-4781-ae61-1b4e4a221ed2" variableName="httpStatus" />
-			<ee:transform doc:name="emailBody" doc:id="d9c748a3-232d-4b06-8608-e12aade57d05" >
+	<error-handler name="global-error-handler" doc:id="dd3dd895-1fc1-45bc-bd5e-de2d8b8edfb7" >
+		<on-error-propagate enableNotifications="false" logException="false" doc:name="on-error-propagate" doc:id="eb4005b5-d5d0-4cbe-aeb4-e8acb92caffd" type="SFTP:ACCESS_DENIED, SFTP:CONNECTIVITY, SFTP:FILE_ALREADY_EXISTS, SFTP:FILE_LOCK, SFTP:ILLEGAL_CONTENT, SFTP:ILLEGAL_PATH, SFTP:RETRY_EXHAUSTED" >
+			<set-variable value='#["SFTP - " ++ ((attributes.statusCode default 500) as String)]' doc:name="httpStatus" doc:id="5f17e55a-1337-402f-91ad-33f03d12ca8a" variableName="httpStatus" />
+			<ee:transform doc:name="emailBody" doc:id="9f07fc54-d93c-4f35-9662-a58ffffe90cf" >
 				<ee:message />
 				<ee:variables >
 					<ee:set-variable resource="dwl/var-email-message.dwl" variableName="emailMessage" />
 				
 </ee:variables>
 			</ee:transform>
-			<until-successful maxRetries="#[Mule::p('until-successful.max-retries')]" doc:name="until-successful" doc:id="8408ae70-5e5c-440a-bbdd-e1fec4bd4754" millisBetweenRetries="#[Mule::p('until-successful.frequency')]">
-				<try doc:name="try-catch" doc:id="baebf163-6551-4c47-a22c-61dcf273dd09">
-					<http:request method="POST" doc:name="Email Request" doc:id="5ba583ac-e54c-4748-b21c-0ffc5df2b6e2" config-ref="HTTP_SMTP_Request_configuration" path="#[Mule::p('http.request.path')]">
+			<until-successful maxRetries="#[Mule::p('until-successful.max-retries')]" doc:name="until-successful" doc:id="21e5c1d0-9ad1-4306-9141-d4a5fafddeb7" millisBetweenRetries="#[Mule::p('until-successful.frequency')]">
+				<try doc:name="try-catch" doc:id="d0e9390d-597b-4bfe-952f-daaaa518b599">
+					<http:request method="POST" doc:name="Email Request" doc:id="8deb9151-5f71-4cdf-b2b6-99ea26f26167" config-ref="HTTP_SMTP_Request_configuration" path="#[Mule::p('http.request.path')]">
 						<http:body><![CDATA[#[output application/json
 ---
 {
@@ -34,45 +35,45 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 }]]]></http:headers>
 					</http:request>
 					<error-handler>
-						<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="372839c5-a69b-455d-9f9b-2f3f2ecf9111" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE">
-							<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="ccf4ef60-1829-4944-a4a8-10ba25047dee" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="20d29115-d594-4fba-9036-6a966770ab8c" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE">
+							<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="df82b09f-3c3c-4734-8c6f-d64abe03dcd3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
 						</on-error-propagate>
-						<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="e9ccc3ee-845f-4bec-b76e-1a556a4a3966" type="ANY">
-											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="1167e2aa-f9e0-470e-9034-677fe3bc82fd" variableName="errorDetails"/>
+						<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="289716bf-5861-4d65-aeb3-52c17a08275f" type="ANY">
+											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="b61055ec-74a8-4b7f-bc61-42474910f9a5" variableName="errorDetails"/>
 						</on-error-continue>
 					</error-handler>
 				</try>
-				<choice doc:name="Choice" doc:id="df6650e1-43ff-42bd-a631-f20e6f0bb66f" >
+				<choice doc:name="Choice" doc:id="ff3d5b0c-b834-4244-a611-24aa59e8d944" >
 					<when expression="#[!isEmpty(vars.errorDetails)]" >
-						<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="7802ca24-951e-4f5c-b955-e257bb7f1190" type="SMTP:OTHER_ERROR" />
+						<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="20d8b237-327a-45df-a0e9-0c6590117a47" type="SMTP:OTHER_ERROR" />
 					</when>
 				</choice>
 			</until-successful>
-			<flow-ref doc:name="Flow reference to error-response-sub-flow" doc:id="747f587a-4615-402c-890a-65789ae97d6a" name="error-response-sub-flow" />
+			<flow-ref doc:name="Flow reference to error-response-sub-flow" doc:id="2f80e779-cd74-4c09-8bd3-d74a6f7e3b89" name="error-response-sub-flow" />
 		
 </on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="5cf40272-3f39-4b39-85a1-d53e3bbae90a" type="EXPRESSION" >
-			<set-variable value='#[attributes.statusCode default "500"]' doc:name="httpStatus" doc:id="31cb8b19-53c0-4a05-95d8-426896c0bd7b" variableName="httpStatus" />
-			<flow-ref doc:name="Flow reference to error-response-sub-flow" doc:id="53a3fe6b-a5b0-4ae5-ac9b-eba4334a0066" name="error-response-sub-flow" />
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="3369b0b6-b552-459b-af95-15454784eb5d" type="EXPRESSION" >
+			<set-variable value='#[attributes.statusCode default "500"]' doc:name="httpStatus" doc:id="9282d81f-7359-4f52-b84d-6407f9ceec1c" variableName="httpStatus" />
+			<flow-ref doc:name="Flow reference to error-response-sub-flow" doc:id="662a00a5-900b-4e78-b34e-aad219799ea7" name="error-response-sub-flow" />
 		
 </on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="b01c9213-2d8e-4127-9ccb-111a54c18ef2" type="SMTP:OTHER_ERROR" >
-			<set-variable value='#[attributes.statusCode default "500"]' doc:name="httpStatus" doc:id="d7f2987a-9ac3-41dc-8bad-ef8a0981eb3a" variableName="httpStatus" />
-			<flow-ref doc:name="Flow reference to common-error-handler-sub-flow" doc:id="a5c871a8-a9f8-4e88-aa86-5cb78428250e" name="error-response-sub-flow" />
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="94509ae2-3a97-42e0-b428-f970c064fc1b" type="SMTP:OTHER_ERROR" >
+			<set-variable value='#[attributes.statusCode default "500"]' doc:name="httpStatus" doc:id="dab6d1cb-e0dd-4b23-a916-1a5dd4f5397c" variableName="httpStatus" />
+			<flow-ref doc:name="Flow reference to common-error-handler-sub-flow" doc:id="232b7a1f-5eee-4285-a806-6d2ee33932ad" name="error-response-sub-flow" />
 		</on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="84ea6b3b-579b-47df-9adf-3fbc80ae6a1e" type="ANY" >
-			<set-variable value='#[attributes.statusCode default "500"]' doc:name="httpStatus" doc:id="c7722e8c-eb78-4703-a216-2adf65d08440" variableName="httpStatus" />
-			<flow-ref doc:name="Flow reference to common-error-handler-sub-flow" doc:id="87169978-e481-4c9d-a4e5-e970e8e0e7df" name="error-response-sub-flow" />
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="b7935d27-1e23-490c-8c6b-7fb18ab7ba9c" type="ANY" >
+			<set-variable value='#[attributes.statusCode default "500"]' doc:name="httpStatus" doc:id="792271f5-bf2f-44b7-8507-a4669f7f2f6d" variableName="httpStatus" />
+			<flow-ref doc:name="Flow reference to common-error-handler-sub-flow" doc:id="310d81cd-238d-41e0-b2aa-77971dedf991" name="error-response-sub-flow" />
 		</on-error-propagate>
 	</error-handler>
-	<sub-flow name="error-response-sub-flow" doc:id="565cbd43-1a44-4e57-9941-9a4d4ef0ad59" >
-		<ee:transform doc:name="DW Set Error Response" doc:id="ce79a364-e826-4e4b-9b95-9a1de97ed30f" >
+	<sub-flow name="error-response-sub-flow" doc:id="1c1c808f-514e-4f9e-8eee-2c1320afabc4" >
+		<ee:transform doc:name="DW Set Error Response" doc:id="db3c439e-3686-43ea-acd0-78f210909e4c" >
 			<ee:message >
 				<ee:set-payload resource="dwl/global-error-handler/msg-error-payload.dwl" />
 			
 
 </ee:message>
 		</ee:transform>
-		<logger level="ERROR" doc:name="ERROR: Error Details" doc:id="d47cc6f7-ffa9-4e32-9f51-6e7213a67b7f" message="#[payload]"/>
+		<logger level="ERROR" doc:name="ERROR: Error Details" doc:id="317616a5-b014-4c4f-9d87-77e524f89d46" message="#[payload]"/>
 	</sub-flow>
 </mule>
