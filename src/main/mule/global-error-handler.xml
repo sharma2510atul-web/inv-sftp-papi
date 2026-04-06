@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<error-handler name="global-error-handler" doc:id="42e0e0a3-dca6-4e2e-a10a-0c9b13e05d27" >
 		<on-error-propagate enableNotifications="false" logException="false" doc:name="on-error-propagate" doc:id="bf5c2fb0-7596-4348-bedc-56d9a1a4f6cc" type="SFTP:ACCESS_DENIED, SFTP:CONNECTIVITY, SFTP:FILE_ALREADY_EXISTS, SFTP:FILE_LOCK, SFTP:ILLEGAL_CONTENT, SFTP:ILLEGAL_PATH, SFTP:RETRY_EXHAUSTED" >
