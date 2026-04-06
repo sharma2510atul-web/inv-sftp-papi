@@ -71,7 +71,6 @@
 						</secureProperties>
 					</cloudhub2Deployment>
 					<classifier>mule-application</classifier>
-					<sharedLibraries/>
 				</configuration>
 			</plugin>
 		</plugins>
