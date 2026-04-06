@@ -58,9 +58,17 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 							<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="ef437859-4b2b-42cb-99a4-6c361555b442" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE" >
 								<logger level="ERROR" doc:name="Log Failed Record" doc:id="f7c3e185-f35f-4a8e-b447-12f11d78f94d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
 							</on-error-propagate>
+							<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="65868908-d8f8-44ee-8d72-a9b53b6ddbca" type="ANY">
+											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="2d430b20-e0f4-45ca-b7d8-791fe09f2eea" variableName="errorDetails"/>
+							</on-error-continue>
 						</error-handler>
 					</try>
 				</until-successful>
+				<choice doc:name="Choice" doc:id="358a8558-3a7c-43b3-b0d6-22fbe75f31d6" >
+					<when expression="#[!isEmpty(vars.errorDetails)]" >
+						<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="4f69a43d-e3a4-45d7-b3c4-140c2f34a000" type="SMTP:OTHER_ERROR" />
+					</when>
+				</choice>
 			</otherwise>
 		</choice>
 		<logger level="INFO" doc:name="Log End INFO" doc:id="9116332e-98bb-4925-b11a-c1fc416a93ce" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing ended"&#10;}]' />

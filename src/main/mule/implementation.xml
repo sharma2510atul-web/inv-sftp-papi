@@ -60,9 +60,17 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 										<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="0e52a2e9-18cb-458a-9ef4-8c2582f5ecb4" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE" >
 											<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="d7666def-d9fa-47de-be59-3999f4906743" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
 										</on-error-propagate>
+										<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="b33b3a45-e08c-4447-8d15-38e28fafe24b" type="ANY">
+											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="41bd1ec6-f1de-4fbb-877e-c451ac028eb9" variableName="errorDetails"/>
+										</on-error-continue>
 									</error-handler>
 								</try>
 							</until-successful>
+							<choice doc:name="Choice" doc:id="d44a0596-ef15-4b8f-b8a0-13cb9479ae1a" >
+								<when expression="#[!isEmpty(vars.errorDetails)]">
+									<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="b6024e6c-14c9-47de-9507-e7ac0e34db25" type="SMTP:OTHER_ERROR"/>
+								</when>
+							</choice>
 						</when>
 						<otherwise >
 							<logger level="INFO" doc:name="Log no failed records" doc:id="9346ac8b-15bf-4237-aa97-00c738432d76" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "No failed records present to be sent for notification"&#10;}]' />
@@ -77,6 +85,14 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<logger level="INFO" doc:name="Log Start INFO" doc:id="1b9c1c51-7f7a-4148-98eb-40639a618091" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default "")&#10;}]' />
 		<logger level="DEBUG" doc:name="Log Start DEBUG" doc:id="b530d9b3-0ca4-43dd-ada5-eec3b0a5b866" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' category="${debug.category}" />
 		<set-variable value="#[output application/json&#10;---&#10;payload]" doc:name="Set variable filePayload" doc:id="19fde34a-dfaa-4dd9-aef6-0d259df7f76e" variableName="filePayload"/>
+		<ee:transform doc:name="Payload to JSON" doc:id="2777cc7e-6467-41df-9ebd-2ec029325f96" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json deferred=true
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 		<batch:job jobName="inventory-papi-batch-job" doc:id="a73ed340-389a-4bf2-a1fe-4052f818e85f" blockSize="${batch.block-size}">
 			<batch:process-records >
 				<batch:step name="SKUNotPresent" doc:id="4ed89a86-1dfb-4d84-b60c-c70bbebbbb49" acceptExpression="isEmpty(payload.SKU[0])">
@@ -184,7 +200,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="QuantityNotWholeNumber" doc:id="ef7fdc24-824b-4056-89a1-0feda5e238f0" acceptExpression="((payload.Quantity[0] as Number) mod 1) == 0" >
+				<batch:step name="QuantityNotWholeNumber" doc:id="ef7fdc24-824b-4056-89a1-0feda5e238f0" acceptExpression="((payload.Quantity[0] as Number) mod 1)  != 0" >
 					<batch:aggregator doc:name="batch-aggregator" doc:id="344f724a-4b75-413d-842f-fcf1f93fa1db" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="b33b7edb-516c-4355-aae2-d9e5f93952d3" >
 							<ee:message >
@@ -311,9 +327,17 @@ flatten(payload)]]></ee:set-payload>
 									<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="b7dd3110-f00b-4585-90bd-6cb55701d2cc" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE">
 										<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="5e566a3b-6938-40b3-8aaf-a8c1e1cff80d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]'/>
 									</on-error-propagate>
+									<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="24dbc234-e3bf-4de0-9cc3-81aa6675d02b" type="ANY">
+											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="423846e8-bf5e-4b18-821e-9e5fee0f48d0" variableName="errorDetails"/>
+									</on-error-continue>
 								</error-handler>
 							</try>
 						</until-successful>
+						<choice doc:name="Choice" doc:id="8ea160d2-42af-4d0a-bb24-7df85589ba33">
+								<when expression="#[!isEmpty(vars.errorDetails)]">
+									<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="958dd230-c2f3-4bfc-a1f4-2b43f66f026d" type="SMTP:OTHER_ERROR" />
+								</when>
+							</choice>
 					
 </batch:aggregator>
 				</batch:step>
