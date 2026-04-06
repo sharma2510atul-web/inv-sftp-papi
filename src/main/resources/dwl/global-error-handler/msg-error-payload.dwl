@@ -8,6 +8,6 @@ output application/json
 	statusCode: vars.httpStatus as Number default 500,
 	timestamp: now() as String,
 	correlationId: correlationId,
-	errorType: ((error.errorType.namespace default "") ++ ":" ++ (error.errorType.identifier default "")),
-	errorMessage: error.description
+	errorType: if(!isEmpty(vars.errorDetails)) ((vars.errorDetails.errorType.namespace default "") ++ ":" ++ (vars.errorDetails.errorType.identifier default "")) else ((error.errorType.namespace default "") ++ ":" ++ (error.errorType.identifier default "")),
+	errorMessage: vars.errorDetails.description default error.description
 }
