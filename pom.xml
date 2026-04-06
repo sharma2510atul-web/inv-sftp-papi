@@ -4,7 +4,7 @@
 
 	<groupId>dbe2a955-f10c-47c6-bcc3-43b50b56693f</groupId>
 	<artifactId>inventory-sftp-prc-api</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 	<name>inventory-sftp-papi</name>
 
@@ -48,22 +48,9 @@
 						<javaVersion>17</javaVersion>
 						<replicas>${replicas}</replicas>
 						<vCores>${vCores}</vCores>
-						<integrations>
-							<services>
-								<objectStoreV2>
-									<enabled>true</enabled>
-								</objectStoreV2>
-							</services>
-						</integrations>
 						<properties>
-							<anypoint.platform.config.analytics.agent.enabled>true</anypoint.platform.config.analytics.agent.enabled>
-							<anypoint.platform.visualizer.displayName>${project.artifactId}</anypoint.platform.visualizer.displayName>
-							<anypoint.platform.visualizer.layer>Process</anypoint.platform.visualizer.layer>
 							<mule.env>${mule.env}</mule.env>
 						</properties>
-						<deploymentSettings>
-							<generateDefaultPublicUrl>false</generateDefaultPublicUrl>
-						</deploymentSettings>
 						<secureProperties>
 							<mule.key>${mule.key}</mule.key>
 						</secureProperties>
@@ -134,13 +121,5 @@
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
-	<distributionManagement>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Corporate Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
-			<layout>default</layout>
-		</repository>
-	</distributionManagement>
 
 </project>
