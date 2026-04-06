@@ -50,15 +50,28 @@
 						<javaVersion>17</javaVersion>
 						<replicas>${replicas}</replicas>
 						<vCores>${vCores}</vCores>
+						<integrations>
+							<services>
+								<objectStoreV2>
+									<enabled>true</enabled>
+								</objectStoreV2>
+							</services>
+						</integrations>
 						<properties>
+							<anypoint.platform.config.analytics.agent.enabled>true</anypoint.platform.config.analytics.agent.enabled>
+							<anypoint.platform.visualizer.displayName>${project.artifactId}</anypoint.platform.visualizer.displayName>
+							<anypoint.platform.visualizer.layer>Process</anypoint.platform.visualizer.layer>
 							<mule.env>${mule.env}</mule.env>
 						</properties>
+						<deploymentSettings>
+							<generateDefaultPublicUrl>false</generateDefaultPublicUrl>
+						</deploymentSettings>
 						<secureProperties>
 							<mule.key>${mule.key}</mule.key>
 						</secureProperties>
 					</cloudhub2Deployment>
 					<classifier>mule-application</classifier>
-					<sharedLibraries />
+					<sharedLibraries/>
 				</configuration>
 			</plugin>
 	</build>
