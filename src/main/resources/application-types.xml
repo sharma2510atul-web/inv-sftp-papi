@@ -136,4 +136,5 @@ type auto_6838a966_4961_46be_ac3a_15e85f29ae3b_Output_Variables_failedRecordDeta
       </types:output-event>
     </types:processor-declaration>
   </types:enrichment>
+  <types:enrichment select="#eba3dc44-51f1-43b9-8855-90fb0de4086c"/>
 </types:mule>

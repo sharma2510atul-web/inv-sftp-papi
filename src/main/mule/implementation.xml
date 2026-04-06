@@ -86,17 +86,9 @@ http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sft
 		<logger level="INFO" doc:name="Log Start INFO" doc:id="0baf5f26-4644-43db-8c01-f9b05743623c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default "")&#10;}]' />
 		<logger level="DEBUG" doc:name="Log Start DEBUG" doc:id="92c264e0-c055-4bd3-ba28-dc4d50ad2d60" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' category="${debug.category}" />
 		<set-variable value="#[output application/json&#10;---&#10;payload]" doc:name="Set variable filePayload" doc:id="580c6ac6-7974-4df4-96f2-cb2998fc5cb0" variableName="filePayload"/>
-		<ee:transform doc:name="Payload to JSON" doc:id="06f488e7-04c8-445b-9cc8-bcde05a5aae6" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json deferred=true
----
-payload]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
 		<batch:job jobName="inventory-papi-batch-job" doc:id="213c9d97-3d56-4d89-81fe-81adc624d2d5" blockSize="${batch.block-size}">
 			<batch:process-records >
-				<batch:step name="SKUNotPresent" doc:id="417713dc-28e4-4d4d-83f9-192b441ff317" acceptExpression="isEmpty(payload.SKU[0])">
+				<batch:step name="SKUNotPresent" doc:id="417713dc-28e4-4d4d-83f9-192b441ff317" acceptExpression="isEmpty(payload[0].SKU)" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="8d4b93d5-5bf1-4a71-b8fc-ba159b2692af" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="7e5a6a71-e932-46bc-85d5-82f67608b406">
 							<ee:message>
@@ -117,7 +109,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="StoreIdNotPresent" doc:id="b38d9c5f-1522-4f1c-bbda-b0e940a257ab" acceptExpression="isEmpty(payload.StoreId[0])" >
+				<batch:step name="StoreIdNotPresent" doc:id="b38d9c5f-1522-4f1c-bbda-b0e940a257ab" acceptExpression="isEmpty(payload[0].StoreId)" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="5674f498-68cf-4754-b615-e32096d12455" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="abfa5794-7536-4ee0-bcbf-7aacc0cf7f76" >
 							<ee:message >
@@ -138,7 +130,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="TypeNotPresent" doc:id="0510ae3e-7eef-4794-ae89-f27d4ee948ad" acceptExpression='isEmpty(payload."Type"[0])' >
+				<batch:step name="TypeNotPresent" doc:id="0510ae3e-7eef-4794-ae89-f27d4ee948ad" acceptExpression='isEmpty(payload[0]."Type")' acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="b308913d-292d-4bec-b715-c0411c07e51f" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="a234c986-874e-4c84-beb7-c04cf7096d4d" >
 							<ee:message >
@@ -159,8 +151,8 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="QuantityNotPresent" doc:id="8d377b13-4f14-4359-a75a-1b23dff559ef" acceptExpression="isEmpty(payload.Quantity[0])" >
-					<batch:aggregator doc:name="batch-aggregator" doc:id="4a4d2925-bff1-4ee1-8427-7b690c04c8da" size="${batch.agg-size}">
+				<batch:step name="QuantityNotPresent" doc:id="8d377b13-4f14-4359-a75a-1b23dff559ef" acceptExpression="isEmpty(payload[0].Quantity)" acceptPolicy="ALL">
+					<batch:aggregator doc:name="batch-aggregator" doc:id="4a4d2925-bff1-4ee1-8427-7b690c04c8da" size="${batch.agg-size}" preserveMimeTypes="true">
 						<ee:transform doc:name="Payload to JSON" doc:id="1cf7a24d-d18c-4792-a6cc-1d553672cc9b" >
 							<ee:message >
 								<ee:set-payload ><![CDATA[output application/json indent=false
@@ -180,7 +172,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="TimestampNotPresent" doc:id="5dd25c35-2291-4601-bf69-4d50e9730648" acceptExpression="isEmpty(payload.Timestamp[0])" >
+				<batch:step name="TimestampNotPresent" doc:id="5dd25c35-2291-4601-bf69-4d50e9730648" acceptExpression="isEmpty(payload[0].Timestamp)" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="5b9e0aab-d7ac-4977-9539-77690be685ca" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="b5356f5c-f6cb-44ed-bd5e-1fb43c6090ad" >
 							<ee:message >
@@ -201,7 +193,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="QuantityNotWholeNumber" doc:id="0cc76bf3-6bce-423a-b471-1af24bd6fda5" acceptExpression="((payload.Quantity[0] as Number) mod 1)  != 0" >
+				<batch:step name="QuantityNotWholeNumber" doc:id="0cc76bf3-6bce-423a-b471-1af24bd6fda5" acceptExpression="((payload[0].Quantity as Number) mod 1)  != 0" acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="6f013c36-aeb0-4838-ae7e-a29105d00019" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="e42c4a89-134a-4f06-9db1-2d7591dcc291" >
 							<ee:message >
@@ -222,7 +214,7 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="TypeNotOfStandardOrBackOrder" doc:id="e484034d-8f3d-45f5-b791-34da50be701d" acceptExpression='!(payload."Type"[0] == "Backorder" or payload."Type"[0] == "Standard")' >
+				<batch:step name="TypeNotOfStandardOrBackOrder" doc:id="e484034d-8f3d-45f5-b791-34da50be701d" acceptExpression='!(["Backorder","Standard"] contains payload[0]."Type")' acceptPolicy="ALL">
 					<batch:aggregator doc:name="batch-aggregator" doc:id="432bb3e2-6ff9-4c6b-b954-c00b26adaa9d" preserveMimeTypes="true" size="${batch.agg-size}">
 						<ee:transform doc:name="Payload to JSON" doc:id="4100f125-c7e1-4cbd-af74-3a53b8857649" >
 							<ee:message >
@@ -243,8 +235,9 @@ flatten(payload)]]></ee:set-payload>
 					
 </batch:aggregator>
 				</batch:step>
-				<batch:step name="ValidRecords" doc:id="c2fb615d-2ca3-46b2-b4f5-dab2d7e2dcc6" acceptExpression='!isEmpty(payload[0].SKU) and !isEmpty(payload[0].StoreId) and !isEmpty(payload[0]."Type") and !isEmpty(payload[0].Quantity) and !isEmpty(payload[0].Timestamp) and (((payload.Quantity[0] as Number) mod 1) == 0) and (payload[0].Type == "Backorder" or payload[0]."Type" == "Standard")'>
-					<batch:aggregator doc:name="batch-aggregator" doc:id="96da9d22-cc5c-4b99-af01-ce68001f6944" size="${batch.agg-size}">
+				<batch:step name="ValidRecords" doc:id="c2fb615d-2ca3-46b2-b4f5-dab2d7e2dcc6" acceptExpression='!isEmpty(payload.SKU[0]) and !isEmpty(payload.StoreId[0]) and !isEmpty(payload."Type"[0]) and !isEmpty(payload.Quantity[0]) and !isEmpty(payload.Timestamp[0]) and (((payload.Quantity[0] as Number) mod 1) == 0) and (["Backorder","Standard"] contains payload."Type"[0])' acceptPolicy="ALL">
+					<batch:aggregator doc:name="batch-aggregator" doc:id="96da9d22-cc5c-4b99-af01-ce68001f6944" size="${batch.agg-size}" preserveMimeTypes="true">
+						<logger level="INFO" doc:name="Log Valid Record Processing Started" doc:id="4ebfb46d-ff4f-4584-b671-7be82c2e223b" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Valid Record Processing Started " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' />
 						<ee:transform doc:name="Payload to JSON and StoreId Grouping" doc:id="4e2b9b29-2b70-47eb-b071-3714672261c0" >
 							<ee:message >
 								<ee:set-payload resource="dwl/msg-payload-mapping.dwl" />
@@ -256,10 +249,6 @@ flatten(payload)]]></ee:set-payload>
 								<ee:message >
 								</ee:message>
 								<ee:variables >
-									<ee:set-variable variableName="storeId" ><![CDATA[%dw 2.0
-output application/java
----
-payload.StoreId]]></ee:set-variable>
 									<ee:set-variable variableName="recordDetails" ><![CDATA[%dw 2.0
 output application/java
 ---
@@ -269,7 +258,7 @@ payload.recordDetails]]></ee:set-variable>
 </ee:variables>
 							</ee:transform>
 							<try doc:name="try-catch" doc:id="c0b2290d-5aec-4fcc-aa97-1cdb5fe2998a" >
-								<sftp:write doc:name="Write files at destination" doc:id="c510afb3-f53d-46db-937a-78d9760df92a" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.orgFileName default &quot;&quot;)]" mode="CREATE_NEW">
+								<sftp:write doc:name="Write files at destination" doc:id="c510afb3-f53d-46db-937a-78d9760df92a" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.fileName default &quot;&quot;)]" mode="CREATE_NEW">
 									<sftp:content ><![CDATA[#[%dw 2.0
 output application/csv header=true,separator=","
 ---
@@ -277,7 +266,7 @@ vars.recordDetails]]]></sftp:content>
 								</sftp:write>
 								<error-handler >
 									<on-error-continue enableNotifications="false" logException="false" doc:name="on-error-continue" doc:id="c3e0f158-675f-4988-8d0c-dfff839a0fab" type="SFTP:FILE_ALREADY_EXISTS" >
-										<sftp:write doc:name="Write files at destination" doc:id="b3cbeea7-3d0b-4823-9568-7030e6efbeb2" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.orgFileName default &quot;&quot;)]" mode="APPEND">
+										<sftp:write doc:name="Write files at destination" doc:id="b3cbeea7-3d0b-4823-9568-7030e6efbeb2" config-ref="SFTP_Config" path="#[Mule::p('sftp.destination-path') ++ (vars.fileName default &quot;&quot;)]" mode="APPEND">
 											<sftp:content ><![CDATA[#[%dw 2.0
 output application/csv header=true,separator=","
 ---
@@ -288,6 +277,7 @@ vars.recordDetails]]]></sftp:content>
 								</error-handler>
 							</try>
 						</foreach>
+						<logger level="INFO" doc:name="Log Valid Record Processing Ended" doc:id="f7500bc1-c9af-472a-9f90-d3185aeb4879" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Valid Record Processing Ended " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' />
 					</batch:aggregator>
 				</batch:step>
 				<batch:step name="OnlyFailures" doc:id="74f8e4fc-6f7b-48bf-aa8e-4a2997c8a413" acceptPolicy="ONLY_FAILURES">
@@ -350,8 +340,6 @@ flatten(payload)]]></ee:set-payload>
 				<flow-ref doc:name="Flow Reference to consume-failedRecords-flow" doc:id="4f33f157-1711-408d-a016-976ff5459b30" name="consume-failedRecords-sub-flow"/>
 			</batch:on-complete>
 		</batch:job>
-		<logger level="INFO" doc:name="Log End INFO" doc:id="41ed6aa5-975f-4296-990b-ebf1ec5c39d3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default "") ++ " completed"&#10;}]' />
-		<logger level="DEBUG" doc:name="Log End DEBUG" doc:id="0778ec2d-da4f-45c6-a9ac-8c0cbc9e78b2" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default "") ++ " ended",&#10;    "payload": write(vars.filePayload, "application/json")&#10;}]' category="${debug.category}" />
 	
 </sub-flow>
 	</mule>
