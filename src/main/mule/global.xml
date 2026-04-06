@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 			</reconnection>
 		</vm:connection>
 		<vm:queues >
-			<vm:queue queueName="InvalidRecordQueue" queueType="PERSISTENT" />
+			<vm:queue queueName="InvalidRecordQueue" queueType="${vm.queue-type}" />
 		</vm:queues>
 	</vm:config>
 	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="30d73998-b329-4456-8dcf-60228cd51bc1" >
