@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>dbe2a955-f10c-47c6-bcc3-43b50b56693f</groupId>
-	<artifactId>inventory-sftp-prc-api</artifactId>
+	<artifactId>inventory-sftp-papi</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 	<name>inventory-sftp-papi</name>
@@ -71,7 +71,6 @@
 						</secureProperties>
 					</cloudhub2Deployment>
 					<classifier>mule-application</classifier>
-					<sharedLibraries/>
 				</configuration>
 			</plugin>
 		</plugins>
