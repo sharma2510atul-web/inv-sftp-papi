@@ -16,39 +16,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 				
 </ee:variables>
 			</ee:transform>
-			<until-successful maxRetries="#[Mule::p('until-successful.max-retries')]" doc:name="until-successful" doc:id="21e5c1d0-9ad1-4306-9141-d4a5fafddeb7" millisBetweenRetries="#[Mule::p('until-successful.frequency')]">
-				<try doc:name="try-catch" doc:id="d0e9390d-597b-4bfe-952f-daaaa518b599">
-					<http:request method="POST" doc:name="Email Request" doc:id="8deb9151-5f71-4cdf-b2b6-99ea26f26167" config-ref="HTTP_SMTP_Request_configuration" path="#[Mule::p('http.request.path')]">
-						<http:body><![CDATA[#[output application/json
----
-{
-  "emailSubject": "Mule Application Error Notification",
-  "emailMessage": vars.emailMessage,
-  "emailAddress": Mule::p('email.id')
-}]]]></http:body>
-						<http:headers><![CDATA[#[output application/json
----
-{
-	"x-correlation-id": vars.correlationId default uuid(),
-	"client_id": Mule::p('secure::http.request.client_id'),
-	"client_secret": Mule::p('secure::http.request.client_secret')
-}]]]></http:headers>
-					</http:request>
-					<error-handler>
-						<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="20d29115-d594-4fba-9036-6a966770ab8c" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE">
-							<logger level="ERROR" doc:name="ERROR:Log Failed Email Sent will retry" doc:id="df82b09f-3c3c-4734-8c6f-d64abe03dcd3" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
-						</on-error-propagate>
-						<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="289716bf-5861-4d65-aeb3-52c17a08275f" type="ANY">
-											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="b61055ec-74a8-4b7f-bc61-42474910f9a5" variableName="errorDetails"/>
-						</on-error-continue>
-					</error-handler>
-				</try>
-				<choice doc:name="Choice" doc:id="ff3d5b0c-b834-4244-a611-24aa59e8d944" >
-					<when expression="#[!isEmpty(vars.errorDetails)]" >
-						<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="20d8b237-327a-45df-a0e9-0c6590117a47" type="SMTP:OTHER_ERROR" />
-					</when>
-				</choice>
-			</until-successful>
+			<flow-ref doc:name="Flow Reference to smtp-request-sub-flow" doc:id="c7a3061e-93f4-4325-b12e-31daba39d6b4" name="smtp-request-sub-flow" />
 			<flow-ref doc:name="Flow reference to error-response-sub-flow" doc:id="2f80e779-cd74-4c09-8bd3-d74a6f7e3b89" name="error-response-sub-flow" />
 		
 </on-error-propagate>

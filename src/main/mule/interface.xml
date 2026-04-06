@@ -37,39 +37,7 @@ http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/
 						<ee:set-variable resource="dwl/var-no-file-exist-email-message.dwl" variableName="emailMessage" />
 					</ee:variables>
 				</ee:transform>
-				<until-successful maxRetries="#[Mule::p('until-successful.max-retries')]" doc:name="until-successful" doc:id="ab7a4b8d-5f7b-420a-83af-f0d20b0ecafe" millisBetweenRetries="#[Mule::p('until-successful.frequency')]">
-					<try doc:name="try-catch" doc:id="3dd0b583-773b-4486-aa7b-3554eec591d1" >
-						<http:request method="POST" doc:name="Email Request" doc:id="3d386027-f2b0-48e2-a7c3-fd3eff59a071" config-ref="HTTP_SMTP_Request_configuration" path="#[Mule::p('http.request.path')]" >
-							<http:body ><![CDATA[#[output application/json
----
-{
-  "emailSubject": "Mule Application Error Notification",
-  "emailMessage": vars.emailMessage,
-  "emailAddress":  Mule::p('email.id')
-}]]]></http:body>
-							<http:headers ><![CDATA[#[output application/json
----
-{
-	"x-correlation-id": vars.correlationId default uuid(),
-	"client_id": Mule::p('secure::http.request.client_id'),
-	"client_secret": Mule::p('secure::http.request.client_secret')
-}]]]></http:headers>
-						</http:request>
-						<error-handler >
-							<on-error-propagate enableNotifications="true" logException="true" doc:name="on-error-propagate" doc:id="1362b761-8d33-4bc6-b88e-ac4a626b36a0" type="HTTP:CONNECTIVITY, HTTP:TIMEOUT, HTTP:INTERNAL_SERVER_ERROR, HTTP:BAD_GATEWAY, HTTP:SERVICE_UNAVAILABLE" >
-								<logger level="ERROR" doc:name="Log Failed Record" doc:id="68ff279b-c478-4100-b777-825dfa991822" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "ERROR",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Transient error will retry again",&#10;    "payload": payload&#10;}]' />
-							</on-error-propagate>
-							<on-error-continue enableNotifications="true" logException="true" doc:name="on-error-continue" doc:id="ab093320-8328-412a-91d3-6eb6cdf725ab" type="ANY">
-											<set-variable value="#[output application/json&#10;---&#10;error]" doc:name="Set errorDetails" doc:id="5df6a652-de65-4817-935e-48bcb124b406" variableName="errorDetails"/>
-							</on-error-continue>
-						</error-handler>
-					</try>
-				</until-successful>
-				<choice doc:name="Choice" doc:id="2fbd8727-f2c3-4a21-9355-e050d63cbe71" >
-					<when expression="#[!isEmpty(vars.errorDetails)]" >
-						<raise-error doc:name="Raise error SMTP:OTHER_ERROR" doc:id="d21355c9-e50d-4f90-97bc-8513925e7610" type="SMTP:OTHER_ERROR" />
-					</when>
-				</choice>
+				<flow-ref doc:name="Flow Reference to smtp-request-sub-flow" doc:id="e5ece7d4-9560-4189-b5c5-206d44cf90f4" name="smtp-request-sub-flow" />
 			</otherwise>
 		</choice>
 		<logger level="INFO" doc:name="Log End INFO" doc:id="8fe6d760-24a0-46d4-8c9c-5fcf6ac1f4df" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing ended"&#10;}]' />
