@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>dbe2a955-f10c-47c6-bcc3-43b50b56693f</groupId>
@@ -56,8 +58,19 @@
 						</secureProperties>
 					</cloudhub2Deployment>
 					<classifier>mule-application</classifier>
-					<sharedLibraries/>
+					<sharedLibraries />
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>exchange-mule-maven-plugin</artifactId>
+				<version>0.1.4</version>
+				<executions>
+					<execution>
+						<id>disable-exchange</id>
+						<phase>none</phase>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
