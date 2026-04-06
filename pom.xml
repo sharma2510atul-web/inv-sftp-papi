@@ -41,7 +41,6 @@
 						<target>Cloudhub-US-East-2</target>
 						<muleVersion>${muleVersion}</muleVersion>
 						<releaseChannel>LTS</releaseChannel>
-						<server>anypoint-exchange-v3</server>
 						<connectedAppClientId>${CLIENT_ID}</connectedAppClientId>
 						<connectedAppClientSecret>${CLIENT_SECRET}</connectedAppClientSecret>
 						<connectedAppGrantType>client_credentials</connectedAppGrantType>
@@ -50,13 +49,6 @@
 						<javaVersion>17</javaVersion>
 						<replicas>${replicas}</replicas>
 						<vCores>${vCores}</vCores>
-						<integrations>
-							<services>
-								<objectStoreV2>
-									<enabled>true</enabled>
-								</objectStoreV2>
-							</services>
-						</integrations>
 						<properties>
 							<anypoint.platform.config.analytics.agent.enabled>true</anypoint.platform.config.analytics.agent.enabled>
 							<anypoint.platform.visualizer.displayName>${project.artifactId}</anypoint.platform.visualizer.displayName>
