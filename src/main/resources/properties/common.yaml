@@ -30,7 +30,6 @@ sftp:
 vm:
   frequency: '2000'
   attempts: '2'
-  queue-type: 'PERSISTENT'
 
 until-successful:
   max-retries: '3'
