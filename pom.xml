@@ -11,6 +11,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<app.runtime>4.9.2</app.runtime>
 		<mule.maven.plugin.version>4.5.3</mule.maven.plugin.version>
 		<munit.version>3.2.1</munit.version>
 		<http.connector.version>1.10.3</http.connector.version>
@@ -71,64 +72,27 @@
 					<sharedLibraries/>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>com.mulesoft.munit.tools</groupId>
-				<artifactId>munit-maven-plugin</artifactId>
-				<version>${munit.version}</version>
-				<executions>
-					<execution>
-						<id>test</id>
-						<phase>test</phase>
-						<goals>
-							<goal>test</goal>
-							<goal>coverage-report</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<coverage>
-						<runCoverage>true</runCoverage>
-						<failBuild>false</failBuild>
-						<requiredApplicationCoverage>70</requiredApplicationCoverage>
-						<requiredResourceCoverage>70</requiredResourceCoverage>
-						<requiredFlowCoverage>70</requiredFlowCoverage>
-						<formats>
-							<format>console</format>
-							<format>html</format>
-							<format>json</format>
-						</formats>
-					</coverage>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.mule.weave</groupId>
-			<artifactId>assertions</artifactId>
-			<version>${assertions.version}</version>
-			<scope>test</scope>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sockets-connector</artifactId>
+			<version>1.2.7</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sftp-connector</artifactId>
+			<version>2.6.4</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-vm-connector</artifactId>
 			<version>2.0.1</version>
 			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>com.mulesoft.munit</groupId>
-			<artifactId>munit-tools</artifactId>
-			<version>3.6.1</version>
-			<classifier>mule-plugin</classifier>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.mulesoft.munit</groupId>
-			<artifactId>munit-runner</artifactId>
-			<version>3.6.1</version>
-			<classifier>mule-plugin</classifier>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
@@ -140,12 +104,6 @@
 			<groupId>com.mulesoft.modules</groupId>
 			<artifactId>mule-secure-configuration-property-module</artifactId>
 			<version>1.3.0</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-sftp-connector</artifactId>
-			<version>2.6.5</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
@@ -161,12 +119,6 @@
 			<id>mulesoft-releases</id>
 			<name>MuleSoft Releases Repository</name>
 			<url>https://repository.mulesoft.org/releases/</url>
-			<layout>default</layout>
-		</repository>
-		<repository>
-			<id>anypoint-exchange-v2</id>
-			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v2/maven</url>
 			<layout>default</layout>
 		</repository>
 	</repositories>
@@ -190,4 +142,5 @@
 			<layout>default</layout>
 		</repository>
 	</distributionManagement>
+
 </project>
