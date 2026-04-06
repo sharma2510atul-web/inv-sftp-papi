@@ -221,14 +221,39 @@
 		<repository>
 			<id>anypoint-exchange-v3</id>
 			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/dbe2a955-f10c-47c6-bcc3-43b50b56693f/maven</url>
 			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<repository>
 			<id>mulesoft-releases</id>
 			<name>MuleSoft Releases Repository</name>
 			<url>https://repository.mulesoft.org/releases/</url>
 			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>mulesoft-releases-ee</id>
+			<name>MuleSoft EE Releases Repository</name>
+			<url>https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 
@@ -238,6 +263,21 @@
 			<name>MuleSoft Releases Repository</name>
 			<layout>default</layout>
 			<url>https://repository.mulesoft.org/releases/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>mulesoft-releases-ee</id>
+			<name>MuleSoft EE Releases Repository</name>
+			<url>https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
