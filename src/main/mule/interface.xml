@@ -41,7 +41,6 @@ http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/
 			</otherwise>
 		</choice>
 		<logger level="INFO" doc:name="Log End INFO" doc:id="8fe6d760-24a0-46d4-8c9c-5fcf6ac1f4df" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing ended"&#10;}]' />
-		<logger level="DEBUG" doc:name="Log End DEBUG" doc:id="1728384c-8983-4766-a9f3-40b38f0c6738" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-main-flow",&#10;    "step": "END",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Inventory Processing ended",&#10;    "payload": write(vars.filePayload, "application/json")&#10;}]' category="${debug.category}" />
 		<error-handler ref="global-error-handler" />
 	</flow>
 	
