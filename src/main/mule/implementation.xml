@@ -138,7 +138,18 @@ vars.recordDetails]]]></sftp:content>
 	<sub-flow name="inventory-papi-batch-job-sub-flow" doc:id="246b703f-01e6-4ab2-9d16-8fd5013b6917" >
 		<logger level="INFO" doc:name="Log Start INFO" doc:id="0baf5f26-4644-43db-8c01-f9b05743623c" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "INFO",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default "")&#10;}]' />
 		<logger level="DEBUG" doc:name="Log Start DEBUG" doc:id="92c264e0-c055-4bd3-ba28-dc4d50ad2d60" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    "logType": "DEBUG",&#10;    "flowName": "inventory-papi-batch-job-sub-flow",&#10;    "step": "START",&#10;    "dateTime": now() as String {format: "yyyy-MM-dd HH:mm:ss.SSS"},&#10;    "correlationId": vars.correlationId default uuid(),&#10;    "message": "Segregation of valid and invalid records in the file " ++ (vars.orgFileName default ""),&#10;    "payload": payload&#10;}]' category="${debug.category}" />
-		<set-variable value="#[output application/json&#10;---&#10;payload]" doc:name="Set variable filePayload" doc:id="580c6ac6-7974-4df4-96f2-cb2998fc5cb0" variableName="filePayload"/>
+		<ee:transform doc:name="File Payload and Payload Streaming" doc:id="213a6d37-2a0d-4062-bd21-aa36a3dbd4fd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/json deferred=true
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="filePayload" ><![CDATA[output application/json deferred=true
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<batch:job jobName="inventory-papi-batch-job" doc:id="213c9d97-3d56-4d89-81fe-81adc624d2d5" blockSize="${batch.block-size}" maxFailedRecords="-1">
 			<batch:process-records >
 				<batch:step name="SKUNotPresent" doc:id="417713dc-28e4-4d4d-83f9-192b441ff317" acceptExpression="isEmpty(payload[0].SKU)" acceptPolicy="ALL">
